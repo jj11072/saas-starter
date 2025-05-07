@@ -1,25 +1,16 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db/drizzle";
-import { beats, licenses, purchases } from "@/lib/db/schema";
+import { beats, licenses } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil",
+  apiVersion: '2025-04-30.basil',
 });
 
-export const dynamic = 'force-dynamic';
-
-export async function HEAD(
-  req: NextRequest,
-  context: { params: { beatId: string } }
-) {
-  return new NextResponse(null, { status: 200 });
-}
-
 export async function GET(
-  req: NextRequest,
+  _request: Request,
   context: { params: { beatId: string } }
 ) {
   try {
@@ -29,7 +20,12 @@ export async function GET(
     }
 
     const beatId = parseInt(context.params.beatId);
-    const beat = await db.select()
+    if (Number.isNaN(beatId)) {
+      return new NextResponse("Invalid Beat ID", { status: 400 });
+    }
+
+    const beat = await db
+      .select()
       .from(beats)
       .where(eq(beats.id, beatId))
       .leftJoin(licenses, eq(beats.id, licenses.beatId))
@@ -37,7 +33,7 @@ export async function GET(
         if (results.length === 0) return null;
         return {
           ...results[0].beats,
-          licenses: results.map(r => r.licenses).filter(Boolean)
+          licenses: results.map((r) => r.licenses).filter(Boolean),
         };
       });
 
@@ -45,13 +41,11 @@ export async function GET(
       return new NextResponse("Beat not found", { status: 404 });
     }
 
-    // Get the basic license (you might want to let users choose a license type)
     const license = beat.licenses[0];
     if (!license) {
       return new NextResponse("No license available", { status: 400 });
     }
 
-    // Create Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -62,7 +56,7 @@ export async function GET(
               name: beat.title,
               description: `License: ${license.name}`,
             },
-            unit_amount: Math.round(Number(license.price) * 100), // Convert to cents
+            unit_amount: Math.round(Number(license.price) * 100),
           },
           quantity: 1,
         },
@@ -82,4 +76,4 @@ export async function GET(
     console.error("[BEAT_PURCHASE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
-} 
+}
