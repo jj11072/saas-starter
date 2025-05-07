@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/lib/db/drizzle";
 import { beats, licenses, purchases } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
@@ -9,9 +9,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-04-30.basil",
 });
 
+export const dynamic = 'force-dynamic';
+
+export async function HEAD(
+  req: NextRequest,
+  context: { params: { beatId: string } }
+) {
+  return new NextResponse(null, { status: 200 });
+}
+
 export async function GET(
-  req: Request,
-  { params }: { params: { beatId: string } }
+  req: NextRequest,
+  context: { params: { beatId: string } }
 ) {
   try {
     const user = await getUser();
@@ -19,7 +28,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const beatId = parseInt(params.beatId);
+    const beatId = parseInt(context.params.beatId);
     const beat = await db.select()
       .from(beats)
       .where(eq(beats.id, beatId))
