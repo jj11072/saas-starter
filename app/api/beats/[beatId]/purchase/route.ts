@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function GET(
   req: Request,
-  { params }: { params: { beatId: string } }
+  context: { params: { beatId: string } }
 ) {
   try {
     const user = await getUser();
@@ -21,7 +21,8 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const beatId = parseInt(params.beatId);
+    const { beatId: beatIdParam } = await context.params;
+    const beatId = parseInt(beatIdParam);
     if (Number.isNaN(beatId)) {
       return new NextResponse("Invalid Beat ID", { status: 400 });
     }
