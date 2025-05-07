@@ -10,7 +10,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function GET(
-  context: { params: { beatId: string } }
+  _request: Request,
+  { params }: { params: { beatId: string } }
 ) {
   try {
     const user = await getUser();
@@ -18,7 +19,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const beatId = parseInt(context.params.beatId);
+    const beatId = parseInt(params.beatId);
     const beat = await db.select()
       .from(beats)
       .where(eq(beats.id, beatId))
