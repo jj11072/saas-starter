@@ -6,11 +6,10 @@ import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-04-30.basil",
 });
 
 export async function GET(
-  request: Request,
   context: { params: { beatId: string } }
 ) {
   try {
