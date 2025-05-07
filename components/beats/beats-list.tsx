@@ -188,7 +188,7 @@ export function BeatsList() {
         try {
             setIsLoading(beatId);
             const response = await fetch(`/api/beats/${beatId}/purchase`, {
-                method: "POST",
+                method: "GET",
             });
 
             if (!response.ok) {
