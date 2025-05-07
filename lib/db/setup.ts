@@ -5,6 +5,8 @@ import readline from 'node:readline';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
+import { db } from './drizzle';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
 const execAsync = promisify(exec);
 
@@ -209,6 +211,18 @@ async function main() {
     BASE_URL,
     AUTH_SECRET,
   });
+
+  console.log('Running migrations...');
+  
+  try {
+    await migrate(db, {
+      migrationsFolder: path.join(__dirname, 'migrations'),
+    });
+    console.log('Migrations completed successfully');
+  } catch (error) {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  }
 
   console.log('🎉 Setup completed successfully!');
 }

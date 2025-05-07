@@ -1,6 +1,8 @@
 import Stripe from 'stripe';
 import { handleSubscriptionChange, stripe } from '@/lib/payments/stripe';
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db/drizzle';
+import { purchases, type NewPurchase } from '@/lib/db/schema';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -26,6 +28,24 @@ export async function POST(request: NextRequest) {
       const subscription = event.data.object as Stripe.Subscription;
       await handleSubscriptionChange(subscription);
       break;
+
+    case 'checkout.session.completed':
+      const session = event.data.object as Stripe.Checkout.Session;
+      
+      // Check if this is a beat purchase (has beatId in metadata)
+      if (session.metadata?.beatId) {
+        const newPurchase: NewPurchase = {
+          userId: Number(session.metadata.userId),
+          beatId: Number(session.metadata.beatId),
+          licenseId: Number(session.metadata.licenseId),
+          amount: (session.amount_total! / 100).toString(), // Convert from cents to string
+          status: "completed",
+          stripePaymentId: session.payment_intent as string,
+        };
+        await db.insert(purchases).values(newPurchase);
+      }
+      break;
+
     default:
       console.log(`Unhandled event type ${event.type}`);
   }

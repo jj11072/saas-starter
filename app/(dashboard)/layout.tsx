@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { use, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { CircleIcon, Home, LogOut } from 'lucide-react';
+import { CircleIcon, Home, LogOut, User, X, Menu } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,14 +13,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut } from '@/app/(login)/actions';
 import { useRouter } from 'next/navigation';
-import { User } from '@/lib/db/schema';
+import { User as DBUser } from '@/lib/db/schema';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { data: user } = useSWR<User>('/api/user', fetcher);
+  const { data: user } = useSWR<DBUser>('/api/user', fetcher);
   const router = useRouter();
 
   async function handleSignOut() {
@@ -65,6 +65,12 @@ function UserMenu() {
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
+          <Link href="/profile" className="flex w-full items-center">
+            <User className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </Link>
+        </DropdownMenuItem>
         <form action={handleSignOut} className="w-full">
           <button type="submit" className="flex w-full">
             <DropdownMenuItem className="w-full flex-1 cursor-pointer">
@@ -79,18 +85,89 @@ function UserMenu() {
 }
 
 function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <header className="border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
-          <CircleIcon className="h-6 w-6 text-orange-500" />
-          <span className="ml-2 text-xl font-semibold text-gray-900">ACME</span>
-        </Link>
-        <div className="flex items-center space-x-4">
-          <Suspense fallback={<div className="h-9" />}>
-            <UserMenu />
-          </Suspense>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center">
+              <CircleIcon className="h-6 w-6 text-orange-500" />
+              <span className="ml-2 text-xl font-semibold text-gray-900">SSIIXX</span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/beats" className="text-black hover:text-orange-500 ml-5">
+                Beats
+              </Link>
+              <Link href="/artist" className="text-black hover:text-orange-500 ml-5">
+                Artist
+              </Link>
+              <Link href="/services" className="text-black hover:text-orange-500 ml-5">
+                Services
+              </Link>
+              <Link href="/contact" className="text-black hover:text-orange-500 ml-5">
+                Contact
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+
+            <Suspense fallback={<div className="h-9" />}>
+              <UserMenu />
+            </Suspense>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4">
+            <div className="absolute right-0 top-16 w-48 py-2 bg-gray-800 rounded-md shadow-lg">
+              <div className="space-y-1">
+                <Link
+                  href="/beats"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-black hover:text-orange-500 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Beats
+                </Link>
+                <Link
+                  href="/artist"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-black hover:text-orange-500 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Artist
+                </Link>
+                <Link
+                  href="/services"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-black hover:text-orange-500 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Services
+                </Link>
+                <Link
+                  href="/contact"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-black hover:text-orange-500 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

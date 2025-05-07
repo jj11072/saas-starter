@@ -5,6 +5,8 @@ import {
   text,
   timestamp,
   integer,
+  decimal,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -17,6 +19,12 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
+  displayName: varchar('display_name', { length: 100 }),
+  bio: text('bio'),
+  location: varchar('location', { length: 100 }),
+  website: varchar('website', { length: 255 }),
+  socialLinks: text('social_links'),
+  stripeCustomerId: text('stripe_customer_id').unique(),
 });
 
 export const teams = pgTable('teams', {
@@ -112,6 +120,87 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const beats = pgTable('beats', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  audioUrl: text('audio_url').notNull(),
+  coverImageUrl: text('cover_image_url'),
+  genre: varchar('genre', { length: 50 }),
+  bpm: integer('bpm'),
+  key: varchar('key', { length: 10 }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  isPublished: boolean('is_published').notNull().default(false),
+});
+
+export const licenses = pgTable('licenses', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  terms: text('terms').notNull(),
+  beatId: integer('beat_id')
+    .notNull()
+    .references(() => beats.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const purchases = pgTable('purchases', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  beatId: integer('beat_id')
+    .notNull()
+    .references(() => beats.id),
+  licenseId: integer('license_id')
+    .notNull()
+    .references(() => licenses.id),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  stripePaymentId: text('stripe_payment_id'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const beatsRelations = relations(beats, ({ one, many }) => ({
+  user: one(users, {
+    fields: [beats.userId],
+    references: [users.id],
+  }),
+  licenses: many(licenses),
+  purchases: many(purchases),
+}));
+
+export const licensesRelations = relations(licenses, ({ one, many }) => ({
+  beat: one(beats, {
+    fields: [licenses.beatId],
+    references: [beats.id],
+  }),
+  purchases: many(purchases),
+}));
+
+export const purchasesRelations = relations(purchases, ({ one }) => ({
+  user: one(users, {
+    fields: [purchases.userId],
+    references: [users.id],
+  }),
+  beat: one(beats, {
+    fields: [purchases.beatId],
+    references: [beats.id],
+  }),
+  license: one(licenses, {
+    fields: [purchases.licenseId],
+    references: [licenses.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -140,3 +229,10 @@ export enum ActivityType {
   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
 }
+
+export type Beat = typeof beats.$inferSelect;
+export type NewBeat = typeof beats.$inferInsert;
+export type License = typeof licenses.$inferSelect;
+export type NewLicense = typeof licenses.$inferInsert;
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;
