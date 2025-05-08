@@ -189,7 +189,14 @@ export function BeatsList() {
             setIsLoading(beatId);
             const response = await fetch(`/api/beats/${beatId}/purchase`, {
                 method: "GET",
+                credentials: "include",
             });
+
+            if (response.status === 401) {
+                toast.error("Please sign in to purchase beats");
+                router.push("/login");
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error("Failed to initiate purchase");
