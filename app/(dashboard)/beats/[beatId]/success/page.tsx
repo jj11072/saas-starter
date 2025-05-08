@@ -13,14 +13,13 @@ export const metadata: Metadata = {
     description: "Your beat purchase was successful",
 };
 
-interface PageProps {
-    searchParams: { [key: string]: string | string[] | undefined }
-}
-
 export default async function PurchaseSuccessPage({
     searchParams,
-}: PageProps) {
-    const sessionId = searchParams.session_id as string;
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const sessionId = params.session_id as string;
     if (!sessionId) {
         return (
             <div className="flex-1 space-y-4 p-8 pt-6">
