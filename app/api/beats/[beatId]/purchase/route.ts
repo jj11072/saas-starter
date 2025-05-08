@@ -11,15 +11,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-04-30.basil',
 });
 
-type RouteContext = {
-  params: {
-    beatId: string;
-  };
-};
-
 export async function GET(
-  request: Request,
-  context: RouteContext
+  req: Request,
+  context: { params: { beatId: string } }
 ) {
   try {
     const user = await getUser();
