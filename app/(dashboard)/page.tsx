@@ -1,9 +1,19 @@
 import { Button } from '@/components/ui/button';
-import { Music, Mic, Headphones, ArrowRight } from 'lucide-react';
+import { Music, Mic, Headphones, ArrowRight, Play } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { getFeaturedBeats } from '@/lib/db/queries';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featuredBeats = await getFeaturedBeats();
+
   return (
     <main>
       {/* Artist Profile Section */}
@@ -39,6 +49,77 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Beats Carousel */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+              Featured Beats
+            </h2>
+            <p className="mt-3 max-w-2xl mx-auto text-lg text-gray-500">
+              Check out our latest and most popular beats
+            </p>
+          </div>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {featuredBeats.map((beat) => (
+                <CarouselItem key={beat.id} className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-1">
+                    <div className="overflow-hidden rounded-lg bg-white shadow-lg">
+                      <div className="relative h-48">
+                        {beat.coverImageUrl ? (
+                          <Image
+                            src={beat.coverImageUrl}
+                            alt={beat.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                            <Music className="h-12 w-12 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {beat.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {beat.genre} • {beat.bpm} BPM • {beat.key}
+                        </p>
+                        <div className="mt-4 flex items-center justify-between">
+                          <span className="text-lg font-bold text-gray-900">
+                            ${beat.price}
+                          </span>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Play className="h-4 w-4" />
+                            </Button>
+                            <Link href={`/beats/${beat.id}`}>
+                              <Button size="sm">
+                                Buy
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         </div>
       </section>
 

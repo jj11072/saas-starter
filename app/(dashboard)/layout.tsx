@@ -93,22 +93,22 @@ function Header() {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <CircleIcon className="h-6 w-6 text-orange-500" />
-              <span className="ml-2 text-xl font-semibold text-gray-900">SSIIXX</span>
+              <CircleIcon className="h-6 w-6 text-orange-500 hidden" />
+              <span className="ml-2 text-xl font-semibold text-gray-900">SSIIXX.UK</span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/beats" className="text-black hover:text-orange-500 ml-5">
+              <Link href="/beats" className="text-black hover:text-orange-500 ml-8">
                 Beats
               </Link>
-              <Link href="/artist" className="text-black hover:text-orange-500 ml-5">
+              <Link href="/artist" className="text-black hover:text-orange-500 ml-3">
                 Artist
               </Link>
-              <Link href="/services" className="text-black hover:text-orange-500 ml-5">
+              <Link href="/services" className="text-black hover:text-orange-500 ml-3">
                 Services
               </Link>
-              <Link href="/contact" className="text-black hover:text-orange-500 ml-5">
+              <Link href="/contact" className="text-black hover:text-orange-500 ml-3">
                 Contact
               </Link>
             </div>

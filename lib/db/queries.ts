@@ -128,3 +128,25 @@ export async function getTeamForUser() {
 
   return result?.team || null;
 }
+
+export async function getFeaturedBeats() {
+  try {
+    const featuredBeats = await db.query.beats.findMany({
+      where: (beats, { eq }) => eq(beats.isPublished, true),
+      orderBy: (beats, { desc }) => [desc(beats.createdAt)],
+      limit: 5,
+      with: {
+        user: {
+          columns: {
+            displayName: true,
+          },
+        },
+      },
+    });
+
+    return featuredBeats;
+  } catch (error) {
+    console.error('Error fetching featured beats:', error);
+    return [];
+  }
+}
