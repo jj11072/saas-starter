@@ -11,9 +11,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-04-30.basil',
 });
 
+type RouteContext = {
+  params: Promise<{ beatId: string }>;
+};
+
 export async function GET(
   req: Request,
-  context: { params: { beatId: string } }
+  context: RouteContext
 ) {
   try {
     const user = await getUser();
@@ -21,7 +25,8 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const beatId = parseInt(context.params.beatId);
+    const params = await context.params;
+    const beatId = parseInt(params.beatId);
     if (Number.isNaN(beatId)) {
       return new NextResponse("Invalid Beat ID", { status: 400 });
     }

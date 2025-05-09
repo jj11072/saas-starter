@@ -80,28 +80,21 @@ export function BeatsList() {
                 });
 
                 // Set up error handling
-                newAudio.onerror = (e) => {
+                newAudio.onerror = ((e: Event | string) => {
+                    if (typeof e === 'string') {
+                        console.error('Audio error:', e);
+                        setError('Failed to load audio. Please try again.');
+                        return;
+                    }
                     const audioElement = e.target as HTMLAudioElement;
                     const error = audioElement.error;
                     console.error('Audio error:', {
                         error,
-                        url: beat.audioUrl,
-                        beatId: beat.id,
-                        readyState: audioElement.readyState,
-                        networkState: audioElement.networkState,
-                        errorCode: error?.code,
-                        errorMessage: error?.message
+                        message: error?.message,
+                        code: error?.code
                     });
-
-                    // Check if the error is due to format support
-                    if (error?.code === 4) {
-                        toast.error('Your browser does not support this audio format. Please try a different browser or convert the file to MP3.');
-                    } else {
-                        toast.error('Failed to play audio. Please try again.');
-                    }
-                    setPlayingBeat(null);
-                    setAudio(null);
-                };
+                    setError('Failed to load audio. Please try again.');
+                }) as OnErrorEventHandler;
 
                 // Set up success handling
                 newAudio.oncanplay = () => {

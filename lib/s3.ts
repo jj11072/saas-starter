@@ -126,7 +126,7 @@ export async function getSignedDownloadUrl(key: string): Promise<string> {
     ResponseContentType: contentType,
     ResponseContentDisposition: 'inline',
     ResponseCacheControl: 'no-cache',
-    ResponseExpires: new Date(Date.now() + 3600 * 1000).toUTCString(),
+    ResponseExpires: new Date(Date.now() + 3600 * 1000),
   });
 
   try {
