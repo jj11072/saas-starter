@@ -83,6 +83,7 @@ export async function uploadToS3(
     Body: fileBuffer,
     ContentType: finalContentType,
     ContentDisposition: 'inline',
+    ACL: 'public-read', // Make the object publicly readable
   });
 
   try {
@@ -123,14 +124,10 @@ export async function getSignedDownloadUrl(key: string, expiresIn = 3600) {
     // Generate a signed URL that's valid for the specified duration
     const signedUrl = await getSignedUrl(s3Client, command, { 
       expiresIn,
-      signableHeaders: new Set(['host']),
+      signableHeaders: new Set(['host', 'x-amz-content-sha256', 'x-amz-date']),
     });
     
-    // Add content type to the URL to ensure proper handling
-    const url = new URL(signedUrl);
-    url.searchParams.set('response-content-type', contentType);
-    
-    return url.toString();
+    return signedUrl;
   } catch (error) {
     console.error('Error generating signed URL:', error);
     throw error;
