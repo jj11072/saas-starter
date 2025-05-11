@@ -42,50 +42,45 @@ const s3Client = new S3Client({
 });
 
 // Helper function to determine content type
-function getContentType(filename: string, providedType: string): string {
-  if (providedType && providedType.startsWith('audio/')) {
-    return providedType;
-  }
-
+function getContentType(filename: string): string {
   const extension = filename.toLowerCase().split('.').pop();
   switch (extension) {
     case 'wav':
       return 'audio/wav';
     case 'mp3':
       return 'audio/mpeg';
-    case 'png':
-      return 'image/png';
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
+    case 'm4a':
+      return 'audio/mp4';
+    case 'ogg':
+      return 'audio/ogg';
     default:
-      return 'application/octet-stream';
+      return 'audio/wav'; // Default to wav if unknown
   }
 }
 
 export async function uploadToS3(
-  file: Buffer,
+  fileBuffer: Buffer,
   key: string,
   contentType: string
 ): Promise<string> {
   const config = getS3Config();
 
-  if (!file || !key || !contentType) {
+  if (!fileBuffer || !key || !contentType) {
     throw new Error('Missing required parameters for S3 upload');
   }
 
-  const finalContentType = getContentType(key, contentType);
+  const finalContentType = getContentType(key);
 
   console.log('Uploading to S3:', {
     key,
     contentType: finalContentType,
-    fileSize: file.length
+    fileSize: fileBuffer.length
   });
 
   const command = new PutObjectCommand({
     Bucket: config.bucket,
     Key: key,
-    Body: file,
+    Body: fileBuffer,
     ContentType: finalContentType,
     ContentDisposition: 'inline',
   });
@@ -113,11 +108,14 @@ export async function uploadToS3(
 }
 
 export async function getSignedDownloadUrl(key: string, expiresIn = 3600) {
+  const contentType = getContentType(key);
+  
   const command = new GetObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME!,
     Key: key,
     ResponseContentDisposition: 'inline',
     ResponseCacheControl: 'no-cache',
+    ResponseContentType: contentType,
     ResponseExpires: new Date(Date.now() + expiresIn * 1000),
   });
 
