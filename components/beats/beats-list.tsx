@@ -159,8 +159,15 @@ export function BeatsList() {
                     });
                 };
 
+                // Set up ended event
+                newAudio.onended = () => {
+                    setPlayingBeat(null);
+                    setAudio(null);
+                };
+
                 // Set the source and start loading
                 newAudio.preload = 'auto';
+                newAudio.crossOrigin = 'anonymous';
                 newAudio.src = beat.audioUrl;
                 newAudio.load();
 

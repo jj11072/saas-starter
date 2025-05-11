@@ -120,8 +120,17 @@ export async function getSignedDownloadUrl(key: string, expiresIn = 3600) {
   });
 
   try {
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-    return signedUrl;
+    // Generate a signed URL that's valid for the specified duration
+    const signedUrl = await getSignedUrl(s3Client, command, { 
+      expiresIn,
+      signableHeaders: new Set(['host']),
+    });
+    
+    // Add content type to the URL to ensure proper handling
+    const url = new URL(signedUrl);
+    url.searchParams.set('response-content-type', contentType);
+    
+    return url.toString();
   } catch (error) {
     console.error('Error generating signed URL:', error);
     throw error;
