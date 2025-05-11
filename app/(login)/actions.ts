@@ -400,7 +400,7 @@ export const inviteTeamMember = validatedActionWithUser(
     }
 
     // Only team owners can invite other owners
-    if (role === UserRole.OWNER && userWithTeam.role !== UserRole.OWNER) {
+    if (role === UserRole.OWNER && userWithTeam.user.role !== UserRole.OWNER) {
       return { error: 'Only team owners can invite other owners' };
     }
 
