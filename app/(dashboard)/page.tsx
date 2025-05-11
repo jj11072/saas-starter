@@ -1,15 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { Music, Mic, Headphones, ArrowRight, Play } from 'lucide-react';
+import { Music, Mic, Headphones, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { getFeaturedBeats } from '@/lib/db/queries';
+import { FeaturedBeatsCarousel } from '@/components/beats/featured-beats-carousel';
 
 export default async function HomePage() {
   const featuredBeats = await getFeaturedBeats();
@@ -17,18 +11,18 @@ export default async function HomePage() {
   return (
     <main>
       {/* Artist Profile Section */}
-      <section className="py-20 bg-gradient-to-b from-black to-white text-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-black to-white text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-            <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            <div className="text-center lg:text-left lg:col-span-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 SSIIXX
                 <span className="block bg-gradient-to-r from-red-600 via-yellow-500 to-green-600 bg-clip-text text-transparent">Professional Producer</span>
               </h1>
-              <p className="mt-3 text-base sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
+              <p className="mt-3 text-base sm:text-lg md:text-xl lg:text-xl">
                 Creating high-quality beats for artists worldwide. Specializing in trap, afrobeats, and EDM.
               </p>
-              <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
+              <div className="mt-8 flex justify-center lg:justify-start">
                 <Link href="/beats">
                   <Button size="lg" className="text-lg rounded-full">
                     Browse Beats
@@ -37,8 +31,8 @@ export default async function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-              <div className="relative w-96 h-96 rounded-full overflow-hidden">
+            <div className="flex justify-center lg:justify-end lg:col-span-6">
+              <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden">
                 <Image
                   src="/ssiixx2.png"
                   alt="Studio Setup"
@@ -53,88 +47,32 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Beats Carousel */}
-      <section className="py-20 bg-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
               Featured Beats
             </h2>
-            <p className="mt-3 max-w-2xl mx-auto text-lg text-gray-500">
+            <p className="mt-3 max-w-2xl mx-auto text-base sm:text-lg text-gray-500">
               Check out our latest and most popular beats
             </p>
           </div>
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent>
-              {featuredBeats.map((beat) => (
-                <CarouselItem key={beat.id} className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-1">
-                    <div className="overflow-hidden rounded-lg bg-white shadow-lg">
-                      <div className="relative h-48">
-                        {beat.coverImageUrl ? (
-                          <Image
-                            src={beat.coverImageUrl}
-                            alt={beat.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-                            <Music className="h-12 w-12 text-gray-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {beat.title}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {beat.genre} • {beat.bpm} BPM • {beat.key}
-                        </p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${beat.price}
-                          </span>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Play className="h-4 w-4" />
-                            </Button>
-                            <Link href={`/beats/${beat.id}`}>
-                              <Button size="sm">
-                                Buy
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
+          <FeaturedBeatsCarousel beats={featuredBeats} />
         </div>
       </section>
 
       {/* Beats Marketplace Section */}
-      <section className="py-20">
+      <section className="py-12 sm:py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
               Beats Marketplace
             </h2>
-            <p className="mt-3 max-w-2xl mx-auto text-lg text-gray-500">
+            <p className="mt-3 max-w-2xl mx-auto text-base sm:text-lg text-gray-500">
               Browse and purchase high-quality beats for your next project
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
+          <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
                 <Music className="h-6 w-6" />
@@ -191,17 +129,17 @@ export default async function HomePage() {
       </section>
 
       {/* Studio Services Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
               Studio Services
             </h2>
-            <p className="mt-3 max-w-2xl mx-auto text-lg text-gray-500">
+            <p className="mt-3 max-w-2xl mx-auto text-base sm:text-lg text-gray-500">
               Professional music production services for artists
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
+          <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
                 <Music className="h-6 w-6" />

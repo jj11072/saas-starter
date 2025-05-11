@@ -3,7 +3,6 @@ import { getUser } from "@/lib/db/queries";
 import { db } from "@/lib/db/drizzle";
 import { beats, purchases } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { getSignedDownloadUrl } from "@/lib/s3";
 
 export async function GET() {
   try {
@@ -30,21 +29,7 @@ export async function GET() {
       .innerJoin(beats, eq(purchases.beatId, beats.id))
       .where(eq(purchases.userId, user.id));
 
-    // Generate signed URLs for audio files
-    const beatsWithSignedUrls = await Promise.all(
-      purchasedBeats.map(async (beat) => {
-        const audioKey = beat.audioUrl.split("/").pop();
-        if (!audioKey) return beat;
-
-        const signedUrl = await getSignedDownloadUrl(audioKey);
-        return {
-          ...beat,
-          audioUrl: signedUrl,
-        };
-      })
-    );
-
-    return NextResponse.json(beatsWithSignedUrls);
+    return NextResponse.json(purchasedBeats);
   } catch (error) {
     console.error("[LIBRARY_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });

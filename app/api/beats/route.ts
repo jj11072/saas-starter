@@ -3,7 +3,6 @@ import { db } from "@/lib/db/drizzle";
 import { beats, licenses } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
 import { eq, and, desc } from "drizzle-orm";
-import { getSignedDownloadUrl } from "@/lib/s3";
 
 export async function GET() {
   try {
@@ -15,56 +14,7 @@ export async function GET() {
       .orderBy(desc(beats.createdAt));
 
     console.log('Found beats:', beatsList.length);
-
-    // Generate signed URLs for each beat's audio and cover image
-    const beatsWithSignedUrls = await Promise.all(
-      beatsList.map(async (beat) => {
-        try {
-          // Handle audio URL
-          let audioUrl = beat.audioUrl;
-          if (beat.audioUrl) {
-            const audioKey = beat.audioUrl.split('/').pop();
-            if (audioKey) {
-              audioUrl = await getSignedDownloadUrl(audioKey, 3600); // 1 hour expiration
-              console.log('Generated signed audio URL:', {
-                beatId: beat.id,
-                originalUrl: beat.audioUrl,
-                signedUrl: audioUrl
-              });
-            }
-          }
-
-          // Handle cover image URL
-          let coverImageUrl = beat.coverImageUrl;
-          if (beat.coverImageUrl) {
-            const coverKey = beat.coverImageUrl.split('/').pop();
-            if (coverKey) {
-              coverImageUrl = await getSignedDownloadUrl(coverKey, 86400); // 24 hour expiration
-              console.log('Generated signed cover URL:', {
-                beatId: beat.id,
-                originalUrl: beat.coverImageUrl,
-                signedUrl: coverImageUrl
-              });
-            }
-          }
-
-          return {
-            ...beat,
-            audioUrl,
-            coverImageUrl,
-          };
-        } catch (error) {
-          console.error('Error generating signed URLs for beat:', {
-            beatId: beat.id,
-            error: error
-          });
-          return beat;
-        }
-      })
-    );
-
-    console.log('Returning beats with signed URLs');
-    return NextResponse.json(beatsWithSignedUrls);
+    return NextResponse.json(beatsList);
   } catch (error) {
     console.error('Error fetching beats:', error);
     return NextResponse.json(

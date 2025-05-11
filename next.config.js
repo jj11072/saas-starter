@@ -40,6 +40,14 @@ const nextConfig = {
       },
     ];
   },
+  // Add experimental features for better audio handling
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: [
+      "@aws-sdk/client-s3",
+      "@aws-sdk/s3-request-presigner",
+    ],
+  },
 };
 
 module.exports = nextConfig;
