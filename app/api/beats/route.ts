@@ -25,7 +25,7 @@ export async function GET() {
           if (beat.audioUrl) {
             const audioKey = beat.audioUrl.split('/').pop();
             if (audioKey) {
-              audioUrl = await getSignedDownloadUrl(audioKey);
+              audioUrl = await getSignedDownloadUrl(audioKey, 3600); // 1 hour expiration
               console.log('Generated signed audio URL:', {
                 beatId: beat.id,
                 originalUrl: beat.audioUrl,
@@ -39,7 +39,7 @@ export async function GET() {
           if (beat.coverImageUrl) {
             const coverKey = beat.coverImageUrl.split('/').pop();
             if (coverKey) {
-              coverImageUrl = await getSignedDownloadUrl(coverKey);
+              coverImageUrl = await getSignedDownloadUrl(coverKey, 86400); // 24 hour expiration
               console.log('Generated signed cover URL:', {
                 beatId: beat.id,
                 originalUrl: beat.coverImageUrl,

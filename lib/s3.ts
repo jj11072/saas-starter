@@ -34,8 +34,11 @@ const getS3Config = () => {
 };
 
 const s3Client = new S3Client({
-  ...getS3Config(),
-  forcePathStyle: true,
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
 });
 
 // Helper function to determine content type
@@ -109,45 +112,20 @@ export async function uploadToS3(
   }
 }
 
-export async function getSignedDownloadUrl(key: string): Promise<string> {
-  const config = getS3Config();
-  
-  if (!key) {
-    throw new Error('Invalid key provided for signed URL generation');
-  }
-
-  console.log('Generating signed URL for key:', key);
-
-  const contentType = getContentType(key, '');
-  
+export async function getSignedDownloadUrl(key: string, expiresIn = 3600) {
   const command = new GetObjectCommand({
-    Bucket: config.bucket,
+    Bucket: process.env.AWS_BUCKET_NAME!,
     Key: key,
-    ResponseContentType: contentType,
     ResponseContentDisposition: 'inline',
     ResponseCacheControl: 'no-cache',
-    ResponseExpires: new Date(Date.now() + 3600 * 1000),
+    ResponseExpires: new Date(Date.now() + expiresIn * 1000),
   });
 
   try {
-    const signedUrl = await getSignedUrl(s3Client, command, { 
-      expiresIn: 3600,
-    });
-
-    console.log('Successfully generated signed URL:', {
-      key,
-      url: signedUrl,
-      contentType
-    });
-
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
     return signedUrl;
   } catch (error) {
-    console.error('Error generating signed URL:', {
-      key,
-      error,
-      bucket: config.bucket,
-      region: config.region
-    });
+    console.error('Error generating signed URL:', error);
     throw error;
   }
 } 

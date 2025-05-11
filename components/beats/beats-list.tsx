@@ -192,14 +192,19 @@ export function BeatsList() {
             }
 
             if (!response.ok) {
-                throw new Error("Failed to initiate purchase");
+                const errorData = await response.text();
+                throw new Error(errorData || "Failed to initiate purchase");
             }
 
             const { url } = await response.json();
+            if (!url) {
+                throw new Error("No checkout URL received");
+            }
+
             window.location.href = url;
         } catch (error) {
-            console.error(error);
-            toast.error("Something went wrong");
+            console.error("Purchase error:", error);
+            toast.error(error instanceof Error ? error.message : "Something went wrong");
         } finally {
             setIsLoading(null);
         }
