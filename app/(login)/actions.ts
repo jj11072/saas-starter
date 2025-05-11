@@ -14,7 +14,8 @@ import {
   type NewTeamMember,
   type NewActivityLog,
   ActivityType,
-  invitations
+  invitations,
+  UserRole
 } from '@/lib/db/schema';
 import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
@@ -128,7 +129,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const newUser: NewUser = {
     email,
     passwordHash,
-    role: 'owner' // Default role, will be overridden if there's an invitation
+    role: UserRole.USER // New users start as regular users
   };
 
   const [createdUser] = await db.insert(users).values(newUser).returning();
@@ -141,8 +142,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     };
   }
 
-  let teamId: number;
-  let userRole: string;
+  let teamId: number | null = null;
+  let userRole: string | null = null;
   let createdTeam: typeof teams.$inferSelect | null = null;
 
   if (inviteId) {
@@ -163,6 +164,12 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
       teamId = invitation.teamId;
       userRole = invitation.role;
 
+      // Update user role based on invitation
+      await db
+        .update(users)
+        .set({ role: UserRole.MEMBER })
+        .where(eq(users.id, createdUser.id));
+
       await db
         .update(invitations)
         .set({ status: 'accepted' })
@@ -178,39 +185,25 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     } else {
       return { error: 'Invalid or expired invitation.', email, password };
     }
-  } else {
-    // Create a new team if there's no invitation
-    const newTeam: NewTeam = {
-      name: `${email}'s Team`
-    };
-
-    [createdTeam] = await db.insert(teams).values(newTeam).returning();
-
-    if (!createdTeam) {
-      return {
-        error: 'Failed to create team. Please try again.',
-        email,
-        password
-      };
-    }
-
-    teamId = createdTeam.id;
-    userRole = 'owner';
-
-    await logActivity(teamId, createdUser.id, ActivityType.CREATE_TEAM);
   }
 
-  const newTeamMember: NewTeamMember = {
-    userId: createdUser.id,
-    teamId: teamId,
-    role: userRole
-  };
+  // Only create team member if there's a team (from invitation)
+  if (teamId && userRole) {
+    const newTeamMember: NewTeamMember = {
+      userId: createdUser.id,
+      teamId: teamId,
+      role: userRole
+    };
 
-  await Promise.all([
-    db.insert(teamMembers).values(newTeamMember),
-    logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
-    setSession(createdUser)
-  ]);
+    await Promise.all([
+      db.insert(teamMembers).values(newTeamMember),
+      logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
+      setSession(createdUser)
+    ]);
+  } else {
+    // Just set the session if no team
+    await setSession(createdUser);
+  }
 
   const redirectTo = formData.get('redirect') as string | null;
   if (redirectTo === 'checkout') {
@@ -393,7 +386,7 @@ export const removeTeamMember = validatedActionWithUser(
 
 const inviteTeamMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
-  role: z.enum(['member', 'owner'])
+  role: z.enum([UserRole.MEMBER, UserRole.OWNER])
 });
 
 export const inviteTeamMember = validatedActionWithUser(
@@ -404,6 +397,11 @@ export const inviteTeamMember = validatedActionWithUser(
 
     if (!userWithTeam?.teamId) {
       return { error: 'User is not part of a team' };
+    }
+
+    // Only team owners can invite other owners
+    if (role === UserRole.OWNER && userWithTeam.role !== UserRole.OWNER) {
+      return { error: 'Only team owners can invite other owners' };
     }
 
     const existingMember = await db
@@ -450,9 +448,6 @@ export const inviteTeamMember = validatedActionWithUser(
       user.id,
       ActivityType.INVITE_TEAM_MEMBER
     );
-
-    // TODO: Send invitation email and include ?inviteId={id} to sign-up URL
-    // await sendInvitationEmail(email, userWithTeam.team.name, role)
 
     return { success: 'Invitation sent successfully' };
   }

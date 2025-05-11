@@ -3,15 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Music, Play, Pause } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from "@/components/ui/carousel";
+import { useState, useEffect } from 'react';
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import useSWR from 'swr';
 
 interface Beat {
     id: number;
@@ -29,10 +24,23 @@ interface FeaturedBeatsCarouselProps {
     beats: Beat[];
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export function FeaturedBeatsCarousel({ beats }: FeaturedBeatsCarouselProps) {
+    const { data: user } = useSWR('/api/user', fetcher);
+    const router = useRouter();
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [playingBeat, setPlayingBeat] = useState<number | null>(null);
     const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
     const [isLoading, setIsLoading] = useState<number | null>(null);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentIndex((current) => (current + 1) % beats.length);
+        }, 5000); // Change slide every 5 seconds
+
+        return () => clearInterval(timer);
+    }, [beats.length]);
 
     const handlePlay = async (beat: Beat) => {
         if (playingBeat === beat.id) {
@@ -46,105 +54,30 @@ export function FeaturedBeatsCarousel({ beats }: FeaturedBeatsCarouselProps) {
                     setAudio(null);
                 }
 
-                // Create a new audio element
                 const newAudio = new Audio();
+                newAudio.src = beat.audioUrl;
+                newAudio.crossOrigin = 'anonymous';
 
-                // Validate the audio URL
-                if (!beat.audioUrl) {
-                    console.error('No audio URL provided for beat:', beat.id);
-                    throw new Error('No audio URL provided');
-                }
-
-                console.log('Setting up audio player:', {
-                    beatId: beat.id,
-                    url: beat.audioUrl
-                });
-
-                // Set up error handling
-                newAudio.onerror = ((e: Event | string) => {
-                    if (typeof e === 'string') {
-                        console.error('Audio error:', e);
-                        toast.error('Failed to load audio. Please try again.');
-                        return;
-                    }
-                    const audioElement = e.target as HTMLAudioElement;
-                    const error = audioElement.error;
-                    console.error('Audio error:', {
-                        error,
-                        message: error?.message,
-                        code: error?.code
-                    });
-
-                    // Handle specific error codes
-                    switch (error?.code) {
-                        case MediaError.MEDIA_ERR_ABORTED:
-                            console.log('Audio playback aborted');
-                            break;
-                        case MediaError.MEDIA_ERR_NETWORK:
-                            toast.error('Network error. Please check your connection.');
-                            break;
-                        case MediaError.MEDIA_ERR_DECODE:
-                            toast.error('Audio format not supported. Please try a different format.');
-                            break;
-                        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                            toast.error('Audio format not supported. Please try a different format.');
-                            break;
-                        default:
-                            toast.error('Failed to load audio. Please try again.');
-                    }
-
-                    setPlayingBeat(null);
-                    setAudio(null);
-                }) as OnErrorEventHandler;
-
-                // Set up success handling
                 newAudio.oncanplay = () => {
-                    console.log('Audio can play:', {
-                        beatId: beat.id,
-                        readyState: newAudio.readyState
-                    });
                     newAudio.play()
                         .then(() => {
-                            console.log('Playback started:', beat.id);
                             setAudio(newAudio);
                             setPlayingBeat(beat.id);
                         })
                         .catch((error) => {
-                            console.error('Playback error:', {
-                                error,
-                                beatId: beat.id,
-                                readyState: newAudio.readyState
-                            });
                             toast.error('Failed to play audio. Please try again.');
                             setPlayingBeat(null);
                             setAudio(null);
                         });
                 };
 
-                // Set up loading events
-                newAudio.onloadstart = () => {
-                    console.log('Audio loading started:', beat.id);
-                    setPlayingBeat(beat.id); // Show loading state
-                };
-
-                // Set up ended event
                 newAudio.onended = () => {
                     setPlayingBeat(null);
                     setAudio(null);
                 };
 
-                // Set the source and start loading
-                newAudio.preload = 'auto';
-                newAudio.crossOrigin = 'anonymous';
-                newAudio.src = beat.audioUrl;
                 newAudio.load();
-
             } catch (error) {
-                console.error('Error setting up audio:', {
-                    error,
-                    beatId: beat.id,
-                    url: beat.audioUrl
-                });
                 toast.error('Failed to play audio. Please try again.');
                 setPlayingBeat(null);
                 setAudio(null);
@@ -152,17 +85,23 @@ export function FeaturedBeatsCarousel({ beats }: FeaturedBeatsCarouselProps) {
         }
     };
 
+    const handleBuyClick = (beatId: number) => {
+        if (!user) {
+            toast.error("Please sign in to purchase beats");
+            router.push("/sign-in");
+            return;
+        }
+        router.push(`/beats/${beatId}`);
+    };
+
     return (
-        <Carousel
-            opts={{
-                align: "start",
-                loop: true,
-            }}
-            className="w-full"
-        >
-            <CarouselContent>
+        <div className="relative w-full overflow-hidden">
+            <div
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
                 {beats.map((beat) => (
-                    <CarouselItem key={beat.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <div key={beat.id} className="w-full flex-shrink-0">
                         <div className="p-1">
                             <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                                 <div className="relative h-48 sm:h-56 md:h-64">
@@ -203,21 +142,31 @@ export function FeaturedBeatsCarousel({ beats }: FeaturedBeatsCarouselProps) {
                                                     <Play className="h-4 w-4" />
                                                 )}
                                             </Button>
-                                            <Link href={`/beats/${beat.id}`}>
-                                                <Button size="sm">
-                                                    Buy
-                                                </Button>
-                                            </Link>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleBuyClick(beat.id)}
+                                            >
+                                                Buy
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </CarouselItem>
+                    </div>
                 ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden sm:flex" />
-            <CarouselNext className="hidden sm:flex" />
-        </Carousel>
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                {beats.map((_, index) => (
+                    <button
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-colors ${index === currentIndex ? 'bg-orange-500' : 'bg-gray-300'
+                            }`}
+                        onClick={() => setCurrentIndex(index)}
+                        aria-label={`Go to slide ${index + 1}`}
+                    />
+                ))}
+            </div>
+        </div>
     );
 } 

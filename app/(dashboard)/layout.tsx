@@ -134,7 +134,7 @@ function Header() {
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
           <div className="md:hidden mt-4">
-            <div className="absolute right-0 top-16 w-48 py-2 bg-gray-800 rounded-md shadow-lg">
+            <div className="absolute right-0 top-16 w-48 py-2 bg-white rounded-md shadow-lg">
               <div className="space-y-1">
                 <Link
                   href="/beats"

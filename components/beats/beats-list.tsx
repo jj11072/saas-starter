@@ -194,7 +194,7 @@ export function BeatsList() {
 
             if (response.status === 401) {
                 toast.error("Please sign in to purchase beats");
-                router.push("/login");
+                router.push("/sign-in");
                 return;
             }
 
