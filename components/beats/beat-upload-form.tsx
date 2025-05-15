@@ -52,33 +52,93 @@ export function BeatUploadForm() {
         try {
             setIsUploading(true);
 
-            const formData = new FormData();
-            formData.append("title", values.title);
-            formData.append("description", values.description);
-            formData.append("price", values.price);
-            formData.append("genre", values.genre);
-            formData.append("bpm", values.bpm);
-            formData.append("key", values.key);
+            // Get pre-signed URL for audio file
+            const audioResponse = await fetch("/api/beats/presigned-url", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    filename: values.audioFile.name,
+                    contentType: values.audioFile.type,
+                }),
+            });
 
-            if (!values.audioFile) {
-                toast.error("Audio file is required");
-                return;
+            if (!audioResponse.ok) {
+                throw new Error("Failed to get upload URL for audio file");
             }
 
-            formData.append("audioFile", values.audioFile);
+            const { signedUrl: audioSignedUrl, url: audioUrl } = await audioResponse.json();
 
+            // Upload audio file directly to S3
+            const audioUploadResponse = await fetch(audioSignedUrl, {
+                method: "PUT",
+                body: values.audioFile,
+                headers: {
+                    "Content-Type": values.audioFile.type,
+                },
+            });
+
+            if (!audioUploadResponse.ok) {
+                throw new Error("Failed to upload audio file");
+            }
+
+            // Handle cover image if provided
+            let coverImageUrl = null;
             if (values.coverImage) {
-                formData.append("coverImage", values.coverImage);
+                const imageResponse = await fetch("/api/beats/presigned-url", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        filename: values.coverImage.name,
+                        contentType: values.coverImage.type,
+                    }),
+                });
+
+                if (!imageResponse.ok) {
+                    throw new Error("Failed to get upload URL for cover image");
+                }
+
+                const { signedUrl: imageSignedUrl, url: imageUrl } = await imageResponse.json();
+
+                const imageUploadResponse = await fetch(imageSignedUrl, {
+                    method: "PUT",
+                    body: values.coverImage,
+                    headers: {
+                        "Content-Type": values.coverImage.type,
+                    },
+                });
+
+                if (!imageUploadResponse.ok) {
+                    throw new Error("Failed to upload cover image");
+                }
+
+                coverImageUrl = imageUrl;
             }
 
+            // Create beat record with metadata
             const response = await fetch("/api/beats/upload", {
                 method: "POST",
-                body: formData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title: values.title,
+                    description: values.description,
+                    price: values.price,
+                    genre: values.genre,
+                    bpm: values.bpm,
+                    key: values.key,
+                    audioUrl,
+                    coverImageUrl,
+                }),
             });
 
             if (!response.ok) {
                 const errorData = await response.text();
-                throw new Error(errorData || "Failed to upload beat");
+                throw new Error(errorData || "Failed to create beat record");
             }
 
             toast.success("Beat uploaded successfully");
