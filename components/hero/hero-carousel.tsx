@@ -31,7 +31,7 @@ const slides = [
         title: "Artist Profile",
         description: "Connect with SSIIXX, a professional producer specializing in trap, afrobeats, and EDM.",
         image: "/ssiixx-artist.png",
-        buttonText: "View Profile",
+        buttonText: "View Artist",
         buttonLink: "/artist"
     },
     {
