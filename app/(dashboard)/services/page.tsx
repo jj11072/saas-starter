@@ -5,7 +5,7 @@ export default function ServicesPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <section className="py-20 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+            <section className="py-20 bg-gradient-to-b from-black to-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">

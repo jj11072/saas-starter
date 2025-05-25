@@ -7,7 +7,7 @@ export default function ContactPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <section className="py-20 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+            <section className="py-20 bg-gradient-to-b from-black to-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
@@ -36,7 +36,7 @@ export default function ContactPage() {
                                         <h3 className="text-lg font-medium text-gray-900">Email</h3>
                                         <p className="mt-1 text-gray-600">
                                             <a href="mailto:contact@ssiixx.com" className="hover:text-orange-500">
-                                                contact@ssiixx.com
+                                                contact@ssiixx.uk
                                             </a>
                                         </p>
                                     </div>
@@ -62,7 +62,7 @@ export default function ContactPage() {
                                     </div>
                                     <div className="ml-3">
                                         <h3 className="text-lg font-medium text-gray-900">Location</h3>
-                                        <p className="mt-1 text-gray-600">Los Angeles, CA</p>
+                                        <p className="mt-1 text-gray-600">Leeds, UK</p>
                                     </div>
                                 </div>
 

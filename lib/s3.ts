@@ -41,6 +41,8 @@ const s3Client = new S3Client({
   },
 });
 
+export { s3Client };
+
 // Helper function to determine content type
 function getContentType(filename: string): string {
   const extension = filename.toLowerCase().split('.').pop();
